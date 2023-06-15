@@ -70,7 +70,10 @@
         const player = $('.player');
         const next = $('.btn-next');
         const prev = $('.btn-prev');
+        const progress = $('#progress');
+        const cd = $('.cd');
         const app = {
+            isPlaying: false,
             currentIndex: 0,
             songs: [
                 {
@@ -81,31 +84,31 @@
                     check: 'ok'
                 },
                 {
-                    name: 'Thê Thái',
+                    name: 'Thế Thái',
                     singer: 'Hương Ly',
                     path: './assets/music/song2.mp3',
                     image: './assets/img/avatar2.png',
                     check: 'ok'
                 },
                 {
-                    name: 'Thê Thái',
-                    singer: 'Hương Ly',
-                    path: './assets/music/song2.mp3',
-                    image: './assets/img/avatar2.png',
+                    name: 'Đế Vương',
+                    singer: 'Đình dũng',
+                    path: './assets/music/song3.mp3',
+                    image: './assets/img/avatar3.png',
                     check: 'ok'
                 },
                 {
-                    name: 'Thê Thái',
+                    name: 'Dối Lừa Remix',
                     singer: 'Hương Ly',
-                    path: './assets/music/song2.mp3',
-                    image: './assets/img/avatar2.png',
+                    path: './assets/music/song4.mp3',
+                    image: './assets/img/avatar4.png',
                     check: 'ok'
                 },
                 {
-                    name: 'Thê Thái',
+                    name: 'Nhường Hạnh Phúc Cho Anh ...',
                     singer: 'Hương Ly',
-                    path: './assets/music/song2.mp3',
-                    image: './assets/img/avatar2.png',
+                    path: './assets/music/song5.mp3',
+                    image: './assets/img/avatar5.png',
                     check: 'ok'
                 },
             ],
@@ -140,11 +143,22 @@
             },
 
             handlEvents: function () {
-                const cd = $('.cd');
+                const _this = this;
                 const cdWidth = cd.offsetWidth;
 
-
-
+                // Xử lý Cd quay / dừng
+                const Cd_Animation = cdThumb.animate([
+                    { transform: 'rotate(360deg)' }
+                ], {
+                    duration: 15000,
+                    iterations: Infinity,
+                })
+                Cd_Animation.pause();
+                // Khi bài hết kết thúc
+                audio.onended = () => {
+                    Cd_Animation.cancel();
+                    cdThumb.style.transform = 'rotate(0deg)';
+                };
                 // thu to / nhỏ
                 document.onscroll = () => {
                     const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -155,25 +169,56 @@
                     cd.style.opacity = newWidth > 0 ? newWidth / cdWidth : 0;
                 }
 
-                var on = 1;
                 playBtn.onclick = () => {
-                    on += 1;
-
-                    if (on % 2 == 0) {
-                        audio.play();
-                        player.classList.add('playing');
+                    if (_this.isPlaying) {
+                        audio.pause();
                     }
                     else {
-                        audio.pause();
-                        player.classList.remove('playing');
+                        audio.play();
                     }
                 }
 
+                // Khi bài hát dc play
+                audio.onplay = () => {
+                    _this.isPlaying = true;
+                    player.classList.add('playing');
+                    Cd_Animation.play();
+                }
+
+                // Khi bài hát dc pause
+                audio.onpause = () => {
+                    _this.isPlaying = false;
+                    player.classList.remove('playing');
+                    Cd_Animation.pause();
+                }
+
+                // khi tiến độ bài hết thay đổi
+                audio.ontimeupdate = () => {
+                    if (audio.duration) {
+                        const progressPercent = Math.floor(audio.currentTime / audio.duration * 100);
+                        progress.value = progressPercent;
+                    }
+                }
+
+                // Xử lý khi tua
+                progress.oninput = (e) => {
+                    const seekTime = audio.duration / 100 * e.target.value;
+                    audio.currentTime = seekTime;
+                }
+
                 next.onclick = () => {
+                    _this.isPlaying = false;
+                    player.classList.remove('playing');
+                    Cd_Animation.cancel();
+                    cdThumb.style.transform = 'rotate(0deg)';
                     this.handleNextClick();
                 }
 
                 prev.onclick = () => {
+                    _this.isPlaying = false;
+                    player.classList.remove('playing');
+                    Cd_Animation.cancel();
+                    cdThumb.style.transform = 'rotate(0deg)';
                     this.handlePrevClick();
                 }
             },
@@ -187,17 +232,20 @@
 
             handleNextClick: function () {
                 this.currentIndex++;
-                
+                if(this.currentIndex >= this.songs.length){
+                    this.currentSong = 0;
+                    this.currentIndex = 0;
+                }
                 this.loadCurrentSong();
             },
 
             handlePrevClick: function () {
                 this.currentIndex--;
 
-                if(this.currentIndex <= 0){
+                if (this.currentIndex <= 0) {
                     this.currentIndex = 0;
                 }
-                
+
                 this.loadCurrentSong();
             },
 
