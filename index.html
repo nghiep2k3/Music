@@ -72,8 +72,10 @@
         const prev = $('.btn-prev');
         const progress = $('#progress');
         const cd = $('.cd');
+        const repeat = $('.btn-repeat')
         const app = {
             isPlaying: false,
+            isRepeat: false,
             currentIndex: 0,
             songs: [
                 {
@@ -99,18 +101,18 @@
                 },
                 {
                     name: 'Dối Lừa Remix',
-                    singer: 'Hương Ly',
+                    singer: 'Nguyễn Đình Vũ',
                     path: './assets/music/song4.mp3',
                     image: './assets/img/avatar4.png',
                     check: 'ok'
                 },
                 {
                     name: 'Nhường Hạnh Phúc Cho Anh ...',
-                    singer: 'Hương Ly',
+                    singer: 'Nguyễn Hương Ly',
                     path: './assets/music/song5.mp3',
                     image: './assets/img/avatar5.png',
                     check: 'ok'
-                },
+                }
             ],
 
             render: function () {
@@ -200,6 +202,8 @@
                     }
                 }
 
+
+
                 // Xử lý khi tua
                 progress.oninput = (e) => {
                     const seekTime = audio.duration / 100 * e.target.value;
@@ -212,6 +216,9 @@
                     Cd_Animation.cancel();
                     cdThumb.style.transform = 'rotate(0deg)';
                     this.handleNextClick();
+                    audio.play()
+                    _this.render();
+
                 }
 
                 prev.onclick = () => {
@@ -220,7 +227,35 @@
                     Cd_Animation.cancel();
                     cdThumb.style.transform = 'rotate(0deg)';
                     this.handlePrevClick();
+                    audio.play()
+
                 }
+
+                //Khi hết bài thì next tiếp
+                audio.onended = () => {
+                    if (_this.isRepeat) {
+                        audio.play()
+                    }
+                    else {
+                        next.click();
+                    }
+                }
+
+                //Khi repeat
+                repeat.onclick = (e) => {
+                    _this.isRepeat = !_this.isRepeat;
+                    repeat.classList.toggle('active', _this.isRepeat)
+                }
+            },
+
+            // Kéo tới active 
+            scrollToActiveSong: function () {
+                setTimeout(() =>{
+                    $('.song .active').scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                    })
+                }, 300)
             },
 
             loadCurrentSong: function () {
@@ -232,8 +267,7 @@
 
             handleNextClick: function () {
                 this.currentIndex++;
-                if(this.currentIndex >= this.songs.length){
-                    this.currentSong = 0;
+                if (this.currentIndex >= this.songs.length) {
                     this.currentIndex = 0;
                 }
                 this.loadCurrentSong();
